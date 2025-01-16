@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+            #app-preloader {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: #1b142f;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 9999;
+            }
+
+            .spinner {
+                width: 50px;
+                height: 50px;
+            }
+
+            .spinner circle {
+                fill: none;
+                stroke: #5bbad5;
+                stroke-width: 5;
+                stroke-linecap: round;
+            }
+
+            #app {
+                opacity: 0;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="app-preloader">
+            <svg class="spinner" viewBox="0 0 50 50">
+                <circle cx="25" cy="25" r="20"></circle>
+            </svg>
+        </div>
+
+        <div id="root"></div>
+
+        <!-- Preloader script -->
+        <script type="module">
+            // preloader.js
+            import gsap from '/node_modules/gsap/all.js';
+
+            const tl = gsap.timeline({ repeat: -1 });
+
+            function initAnimation() {
+                tl.fromTo(
+                    '#app-preloader circle',
+                    {
+                        strokeDasharray: 126,
+                        strokeDashoffset: 126,
+                        rotation: 0,
+                    },
+                    {
+                        strokeDashoffset: -126,
+                        rotation: 360,
+                        duration: 1.5,
+                        ease: 'power2.inOut',
+                        transformOrigin: 'center',
+                    }
+                );
+            }
+
+            function removePreloader() {
+                const preloader = document.getElementById('app-preloader');
+                const app = document.getElementById('root');
+
+                if (preloader && app) {
+                    const transitionTl = gsap.timeline();
+
+                    transitionTl
+                        .to(app, {
+                            duration: 0.5,
+                            opacity: 1,
+                            ease: 'power2.inOut',
+                        })
+                        .to(
+                            preloader,
+                            {
+                                duration: 0.5,
+                                opacity: 0,
+                                ease: 'power2.inOut',
+                                onComplete: () => {
+                                    preloader.remove();
+                                    tl.kill();
+                                    transitionTl.kill();
+                                },
+                            },
+                            '-=0.3'
+                        );
+                }
+            }
+
+            function checkReactApp() {
+                const app = document.getElementById('root');
+
+                if (app && app.children.length > 0) {
+                    console.log('remove preloader');
+                    setTimeout(removePreloader, 100);
+                } else {
+                    requestAnimationFrame(checkReactApp);
+                }
+            }
+
+            function checkGSAPLoad() {
+                if (gsap) {
+                    initAnimation();
+                    checkReactApp();
+                } else {
+                    requestAnimationFrame(checkGSAPLoad);
+                }
+            }
+
+            checkGSAPLoad();
+        </script>
+
+        <!-- React will be loaded through this script -->
+        <script type="module" src="/src/main.jsx"></script>
+    </body>
+</html>
